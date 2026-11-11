@@ -1,0 +1,2276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SGD - Cesta de Entrega</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --font-main: "TASA Orbiter", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      --color-primary: #2b466d;
+      --color-primary-dark: #15263F;
+      --color-primary-light: #3B5A85;
+      --color-primary-super-light: #4c6a9615;
+      --color-primary-super-lighter: #627faa15;
+      --color-accent-info: #2B6FC4;
+      --color-neutral-light: #c4c9d1;
+      --color-neutral: #7A8797;
+      --color-neutral-dark: #2A3140;
+      --color-success: #10895E;
+      --color-error: #C53030;
+      --color-warning: #C98318;
+      --color-background: #F5F7FA;
+      --color-border: #c4c9d1;
+      --color-border-light: #edeef0;
+      --color-text: #2A3140;
+      --color-text-dark: #0D1A2A;
+      --color-toast-bg: #E3ECFA;
+      --color-toast-green: #E4FAEE;
+      --color-toast-red: #FCE8E8;
+      --color-toast-yellow: #FFF3D9;
+      --color-toast-primary: #E7ECFF;
+      --color-white: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font-main);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--color-background);
+      color: var(--color-text);
+      height: 100dvh;
+      width: 100dvw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: row;
+    }
+
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background-color: var(--color-primary-light);
+      border-radius: 8px;
+    }
+
+    .sidebar {
+      width: 90px;
+      height: calc(100dvh - 40px);
+      margin: 20px 0 20px 30px;
+      background: var(--color-white);
+      border-radius: 40px;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
+      z-index: 20;
+      transition: width 0.35s ease, padding 0.35s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sidebar.expanded {
+      width: 290px;
+      padding: 2rem 1.5rem;
+    }
+
+    .sidebar-top {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .sidebar-toggle-row {
+      width: 100%;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar.expanded .sidebar-toggle-row {
+      justify-content: flex-end;
+    }
+
+    .sidebar-toggle-btn {
+      cursor: pointer;
+      color: var(--color-primary);
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+    }
+
+    .sidebar-profile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 24px 0;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(122, 135, 151, 0.2);
+      gap: 14px;
+    }
+
+    .sidebar.expanded .sidebar-profile {
+      justify-content: flex-start;
+    }
+
+    .profile-initials {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
+      color: var(--color-white);
+      font-weight: 800;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 2px solid var(--color-white);
+      box-shadow: 0 2px 8px rgba(43, 70, 109, 0.2);
+    }
+
+    .profile-info {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .sidebar.expanded .profile-info {
+      display: flex;
+    }
+
+    .profile-greeting {
+      font-size: 1.05rem;
+      color: var(--color-primary);
+    }
+
+    .profile-role-badge {
+      background: var(--color-primary-super-light);
+      color: var(--color-primary);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      width: fit-content;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .nav-option {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      width: 100%;
+      padding: 12px 0;
+      border-radius: 12px;
+      border: none;
+      background: transparent;
+      color: var(--color-primary);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.25s ease;
+      text-align: left;
+    }
+
+    .sidebar.expanded .nav-option {
+      justify-content: flex-start;
+      padding: 12px 18px;
+    }
+
+    .nav-option:hover {
+      background: rgba(43, 70, 109, 0.06);
+    }
+
+    .nav-option.active {
+      background: var(--color-primary-super-light);
+      font-weight: 700;
+    }
+
+    .nav-option.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 60%;
+      width: 4px;
+      background-color: var(--color-primary);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-option i {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .nav-label {
+      display: none;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .sidebar.expanded .nav-label {
+      display: inline;
+    }
+
+    .sidebar-bottom {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(122, 135, 151, 0.2);
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    .top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 32px 54px 20px 54px;
+      flex-shrink: 0;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .header-title-area {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .header-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--color-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .header-subtitle {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--color-primary-light);
+      opacity: 0.85;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .screen-switcher-bar {
+      display: flex;
+      background: var(--color-white);
+      padding: 6px;
+      border-radius: 38px;
+      border: 1px solid var(--color-border-light);
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      gap: 6px;
+    }
+
+    .screen-tab-btn {
+      padding: 10px 22px;
+      border-radius: 38px;
+      border: none;
+      background: transparent;
+      color: var(--color-neutral);
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .screen-tab-btn.active {
+      background: var(--color-primary-light);
+      color: var(--color-white);
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .notif-bell-btn {
+      position: relative;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: var(--color-white);
+      border: 1px solid var(--color-border-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      cursor: pointer;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+    }
+
+    .notif-bell-btn:hover {
+      border-color: var(--color-primary-light);
+      transform: translateY(-2px);
+    }
+
+    .notif-badge-count {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      background: var(--color-error);
+      color: var(--color-white);
+      font-size: 0.72rem;
+      font-weight: 800;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .page-content {
+      flex: 1;
+      width: 100%;
+      padding: 10px 54px 40px 54px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow-y: auto;
+    }
+
+    .screen-view {
+      display: none;
+      flex-direction: column;
+      width: 100%;
+      gap: 32px;
+      padding-bottom: 30px;
+    }
+
+    .screen-view.active {
+      display: flex;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 24px;
+      flex-shrink: 0;
+    }
+
+    .dashboard-card {
+      background: var(--color-white);
+      border-radius: 28px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      border: 1px solid var(--color-border-light);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.02);
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0px 10px 24px rgba(0, 0, 0, 0.05);
+    }
+
+    .dashboard-card.total-card {
+      background: var(--color-primary-light);
+      border: none;
+    }
+
+    .dashboard-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dashboard-icon-circle {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .dashboard-card-value {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: var(--color-primary);
+      line-height: 1;
+    }
+
+    .dashboard-card.total-card .dashboard-card-value {
+      color: var(--color-white);
+    }
+
+    .dashboard-card-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+
+    .dashboard-card.total-card .dashboard-card-title {
+      color: rgba(255, 255, 255, 0.9);
+      opacity: 1;
+    }
+
+    .action-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .pill-tabs {
+      display: flex;
+      background: var(--color-white);
+      border-radius: 38px;
+      padding: 8px;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--color-border-light);
+      gap: 4px;
+    }
+
+    .pill-tab {
+      padding: 10px 24px;
+      border-radius: 38px;
+      border: none;
+      background: transparent;
+      color: var(--color-neutral);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pill-tab.active {
+      background: var(--color-primary-light);
+      color: var(--color-white);
+    }
+
+    .search-box-wrapper {
+      flex: 1;
+      min-width: 280px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box-wrapper i.search-icon {
+      position: absolute;
+      left: 22px;
+      color: var(--color-primary);
+      font-size: 1.25rem;
+    }
+
+    .search-input {
+      width: 100%;
+      border-radius: 38px;
+      border: 1px solid var(--color-border-light);
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      padding: 18px 48px 18px 54px;
+      background: var(--color-white);
+      font-size: 0.95rem;
+      color: var(--color-primary);
+      font-weight: 500;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--color-primary-light);
+    }
+
+    .clear-search-btn {
+      position: absolute;
+      right: 20px;
+      background: transparent;
+      border: none;
+      color: var(--color-neutral);
+      cursor: pointer;
+      font-size: 1.25rem;
+      display: none;
+    }
+
+    .btn-primary-pill {
+      background: var(--color-primary-light);
+      color: var(--color-white);
+      border: 1px solid var(--color-primary-light);
+      border-radius: 38px;
+      padding: 15px 28px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary-pill:hover:not(:disabled) {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+
+    .btn-primary-pill:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-success-pill {
+      background: var(--color-success);
+      color: var(--color-white);
+      border: 1px solid var(--color-success);
+      border-radius: 38px;
+      padding: 15px 28px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.04);
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-success-pill:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+
+    .btn-back-pill {
+      background: var(--color-primary-super-light);
+      color: var(--color-primary-light);
+      border: none;
+      border-radius: 99px;
+      padding: 12px 24px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: fit-content;
+    }
+
+    .btn-back-pill:hover {
+      background: var(--color-primary-light);
+      color: var(--color-white);
+    }
+
+    .list-workspace {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    .cards-scroll-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .data-card {
+      background: var(--color-white);
+      border-radius: 26px;
+      border: 1px solid var(--color-border-light);
+      padding: 30px 36px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-wrap: wrap;
+      box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.02);
+    }
+
+    .data-card:hover {
+      border-color: var(--color-primary-light);
+      box-shadow: 0px 10px 24px rgba(43, 70, 109, 0.06);
+    }
+
+    .data-card-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 22px;
+      flex: 1;
+      min-width: 300px;
+    }
+
+    .data-card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: var(--color-toast-primary);
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.65rem;
+      flex-shrink: 0;
+    }
+
+    .data-card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .data-card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .data-card-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--color-primary);
+    }
+
+    .status-badge {
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .movement-notif-pill {
+      background: var(--color-toast-yellow);
+      color: var(--color-warning);
+      border: 1px solid rgba(201, 131, 24, 0.35);
+      padding: 6px 14px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .data-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 0.92rem;
+      color: var(--color-primary);
+    }
+
+    .meta-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--color-background);
+      padding: 6px 14px;
+      border-radius: 99px;
+    }
+
+    .btn-card-details {
+      background: var(--color-primary-super-lighter);
+      color: var(--color-primary-light);
+      border: none;
+      padding: 12px 22px;
+      border-radius: 99px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-card-details:hover {
+      background: var(--color-primary-light);
+      color: var(--color-white);
+    }
+
+    .filter-panel {
+      width: 320px;
+      background: var(--color-white);
+      border: 1px solid var(--color-border-light);
+      border-radius: 32px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex-shrink: 0;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .filter-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-primary);
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .filter-group-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--color-primary-light);
+    }
+
+    .filter-select {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 99px;
+      border: 1px solid var(--color-border-light);
+      background: var(--color-background);
+      color: var(--color-primary);
+      font-size: 0.88rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .btn-clear-filters {
+      width: 100%;
+      padding: 14px;
+      border-radius: 99px;
+      border: none;
+      background: var(--color-primary-super-light);
+      color: var(--color-primary);
+      font-weight: 700;
+      font-size: 0.92rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-clear-filters:hover {
+      background: var(--color-primary);
+      color: var(--color-white);
+    }
+
+    .section-box {
+      background: var(--color-white);
+      border-radius: 28px;
+      border: 1px solid var(--color-border-light);
+      padding: 36px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.03);
+    }
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-title-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--color-primary);
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    .divider-line {
+      width: 100%;
+      height: 1px;
+      background: var(--color-primary-light);
+      opacity: 0.2;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 240px;
+      gap: 12px;
+    }
+
+    .form-field label {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .form-field label span.req {
+      color: var(--color-error);
+    }
+
+    .form-input, .form-select {
+      padding: 15px 22px;
+      border-radius: 38px;
+      border: 1px solid var(--color-border-light);
+      background: var(--color-background);
+      color: var(--color-primary);
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      width: 100%;
+    }
+
+    .form-input:disabled, .form-select:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    .demands-selection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 24px;
+    }
+
+    .demanda-card {
+      background: var(--color-white);
+      border-radius: 24px;
+      border: 1px solid var(--color-border-light);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+      transition: all 0.2s ease;
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.02);
+    }
+
+    .demanda-card.selected {
+      border: 2px solid var(--color-primary-light);
+      background: #f8faff;
+    }
+
+    .demanda-card.locked-duplicate {
+      opacity: 0.65;
+      background: #f3f4f6;
+    }
+
+    .demanda-inner-box {
+      background: var(--color-background);
+      padding: 20px 22px;
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: var(--color-primary-dark);
+      line-height: 1.4;
+    }
+
+    .upload-dropzone {
+      padding: 44px 24px;
+      border: 2px dashed var(--color-primary-light);
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      position: relative;
+      cursor: pointer;
+      background: rgba(231, 236, 255, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .upload-dropzone:hover {
+      background: rgba(231, 236, 255, 0.55);
+    }
+
+    .upload-dropzone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .files-pills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .file-pill {
+      padding: 14px 24px;
+      background: var(--color-primary-super-light);
+      border-radius: 99px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--color-primary);
+      font-weight: 700;
+      font-size: 0.9rem;
+      border: 1px solid var(--color-border-light);
+    }
+
+    .timeline-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .timeline-progress-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: var(--color-background);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .timeline-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary-light) 0%, var(--color-success) 100%);
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .timeline-card {
+      padding: 18px 20px;
+      border-radius: 20px;
+      background: var(--color-background);
+      border: 1px solid var(--color-border-light);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+
+    .timeline-card.completed {
+      background: #F2FBF7;
+      border-color: rgba(16, 137, 94, 0.35);
+    }
+
+    .timeline-card.current {
+      background: var(--color-white);
+      border: 2px solid var(--color-primary);
+      box-shadow: 0 8px 24px rgba(43, 70, 109, 0.12);
+      transform: translateY(-2px);
+    }
+
+    .timeline-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .timeline-step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: var(--color-white);
+      color: var(--color-neutral);
+      border: 1px solid var(--color-border);
+    }
+
+    .timeline-card.completed .timeline-step-number {
+      background: var(--color-success);
+      color: var(--color-white);
+      border-color: var(--color-success);
+    }
+
+    .timeline-card.current .timeline-step-number {
+      background: var(--color-primary);
+      color: var(--color-white);
+      border-color: var(--color-primary);
+    }
+
+    .timeline-sector-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(122, 135, 151, 0.12);
+      color: var(--color-neutral-dark);
+    }
+
+    .timeline-card.completed .timeline-sector-tag {
+      background: var(--color-toast-green);
+      color: var(--color-success);
+    }
+
+    .timeline-card.current .timeline-sector-tag {
+      background: var(--color-toast-primary);
+      color: var(--color-primary);
+    }
+
+    .timeline-step-title {
+      font-size: 0.92rem;
+      font-weight: 800;
+      color: var(--color-primary);
+      line-height: 1.3;
+    }
+
+    .timeline-step-desc {
+      font-size: 0.78rem;
+      color: var(--color-neutral);
+      line-height: 1.35;
+    }
+
+    .immutability-banner {
+      background: var(--color-toast-red);
+      border: 1px solid var(--color-error);
+      color: var(--color-error);
+      padding: 22px 28px;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    .audit-comment-input {
+      width: 100%;
+      padding: 13px 18px;
+      border-radius: 18px;
+      border: 1px solid var(--color-border-light);
+      background: var(--color-white);
+      color: var(--color-primary);
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    .toast-container {
+      position: fixed;
+      top: 28px;
+      right: 28px;
+      width: 420px;
+      max-width: 90dvw;
+      padding: 18px 24px;
+      border-radius: 18px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      z-index: 99999;
+      box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.18);
+      backdrop-filter: blur(12px);
+    }
+
+    .toast-container.show {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-toggle-row">
+        <button class="sidebar-toggle-btn" id="toggleSidebarBtn" title="Expandir/Recolher Menu">
+          <i class="ph-bold ph-list"></i>
+        </button>
+      </div>
+      <div class="sidebar-profile">
+        <div class="profile-initials">PP</div>
+        <div class="profile-info">
+          <p class="profile-greeting">Olá, <strong>Pedro</strong></p>
+          <span class="profile-role-badge">Gestor Técnico</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-option" onclick="showToast('Navegação demonstrativa focada no Módulo de Cestas.', 'success')">
+          <i class="ph-fill ph-grid-four"></i>
+          <span class="nav-label">Visão Geral</span>
+        </button>
+        <button class="nav-option" onclick="showToast('As demandas aceitas já estão integradas ao Módulo de Cestas.', 'success')">
+          <i class="ph-fill ph-paper-plane-right"></i>
+          <span class="nav-label">Demandas</span>
+        </button>
+        <button class="nav-option" onclick="showToast('Módulo de Contratos vinculado às Cestas.', 'success')">
+          <i class="ph-bold ph-signature"></i>
+          <span class="nav-label">Contratos</span>
+        </button>
+        <button class="nav-option" onclick="showToast('Módulo de Editais vinculado às Cestas.', 'success')">
+          <i class="ph-fill ph-megaphone"></i>
+          <span class="nav-label">Editais</span>
+        </button>
+        <button class="nav-option active" onclick="switchScreen('list')">
+          <i class="ph-fill ph-shopping-cart"></i>
+          <span class="nav-label">Cesta de Entrega</span>
+        </button>
+      </nav>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="nav-option">
+        <i class="ph-fill ph-gear"></i>
+        <span class="nav-label">Configurações</span>
+      </button>
+      <button class="nav-option" style="color: #EF4444;">
+        <i class="ph-fill ph-sign-out"></i>
+        <span class="nav-label">Sair</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-container">
+    <header class="top-header">
+      <div class="header-title-area">
+        <h1 class="header-title" id="pageMainTitle">Cesta de Entrega</h1>
+        <p class="header-subtitle">Faturamento, Liquidação e Trilha Formal de Auditoria (SGD)</p>
+      </div>
+
+      <div class="header-controls">
+        <div class="screen-switcher-bar">
+          <button class="screen-tab-btn active" id="tabBtnList" onclick="switchScreen('list')">
+            <i class="ph-fill ph-folders"></i> 1. Gerenciar Cestas
+          </button>
+          <button class="screen-tab-btn" id="tabBtnCreate" onclick="switchScreen('create')">
+            <i class="ph-bold ph-plus-circle"></i> 2. Criar Cesta
+          </button>
+          <button class="screen-tab-btn" id="tabBtnDetails" onclick="openCestaDetails(selectedCestaId)">
+            <i class="ph-fill ph-shield-check"></i> 3. Auditoria e Esteira
+          </button>
+        </div>
+
+        <button class="notif-bell-btn" onclick="filterByRecentMovement()" title="Notificações Visuais de Movimentação (HUBrasil - EBSERH)">
+          <i class="ph-fill ph-bell-ringing" style="font-size: 1.35rem;"></i>
+          <span class="notif-badge-count" id="notifCountBadge">3</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <section class="screen-view active" id="screen-list">
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <div class="action-header-row">
+          <div class="pill-tabs">
+            <button class="pill-tab active" onclick="setCategoryTab('todas', this)">Todas</button>
+            <button class="pill-tab" onclick="setCategoryTab('tecnica_nf', this)">Triagem & NF</button>
+            <button class="pill-tab" onclick="setCategoryTab('esteira', this)">Esteira Institucional</button>
+            <button class="pill-tab" onclick="setCategoryTab('finalizadas', this)">Faturadas & Pagas</button>
+          </div>
+
+          <div class="search-box-wrapper">
+            <i class="ph-bold ph-magnifying-glass search-icon"></i>
+            <input
+              type="text"
+              id="searchCestaInput"
+              class="search-input"
+              placeholder="Busca direta por #ID da Cesta (ex: 101), Empresa, Contrato ou Edital..."
+              oninput="renderCestasList()"
+            />
+            <button class="clear-search-btn" id="clearSearchBtn" onclick="clearSearchInput()">
+              <i class="ph-fill ph-x-circle"></i>
+            </button>
+          </div>
+
+          <button class="btn-primary-pill" onclick="switchScreen('create')">
+            <i class="ph-bold ph-plus"></i> Nova Cesta de Entrega
+          </button>
+        </div>
+
+        <div class="list-workspace">
+          <div class="cards-scroll-col" id="cestasListContainer"></div>
+
+          <aside class="filter-panel">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+              <div class="filter-header">
+                <i class="ph-fill ph-funnel"></i>
+                <span>Filtros de Pesquisa</span>
+              </div>
+
+              <div class="filter-group">
+                <span class="filter-group-title">Por Status da Cesta</span>
+                <select id="filterStatusSelect" class="filter-select" onchange="renderCestasList()">
+                  <option value="">Todos os status</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <span class="filter-group-title">Por Empresa Demandada</span>
+                <select id="filterEmpresaSelect" class="filter-select" onchange="renderCestasList()">
+                  <option value="">Todas as empresas</option>
+                  <option value="Vértice Digital Criativa">Vértice Digital Criativa</option>
+                  <option value="Nordeste Mídia & Audiovisual">Nordeste Mídia & Audiovisual</option>
+                  <option value="Sergipe Tech Comunicação">Sergipe Tech Comunicação</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <span class="filter-group-title">Por Edital de Referência</span>
+                <select id="filterEditalSelect" class="filter-select" onchange="renderCestasList()">
+                  <option value="">Todos os editais</option>
+                  <option value="Edital 01/2026 - Comunicação EBSERH">Edital 01/2026 - Comunicação EBSERH</option>
+                  <option value="Edital 04/2026 - Produção Audiovisual UFS">Edital 04/2026 - Produção Audiovisual UFS</option>
+                </select>
+              </div>
+
+              <div class="filter-group" style="border-bottom: none; padding-bottom: 0;">
+                <span class="filter-group-title">Movimentação Recente</span>
+                <label style="display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--color-primary); cursor: pointer; margin-top: 6px;">
+                  <input type="checkbox" id="filterMovementCheck" onchange="renderCestasList()" style="width: 16px; height: 16px;" />
+                  Apenas com notificações ativas
+                </label>
+              </div>
+            </div>
+
+            <button class="btn-clear-filters" onclick="resetAllFilters()">
+              <i class="ph-fill ph-broom"></i> Limpar Filtros
+            </button>
+          </aside>
+        </div>
+      </section>
+
+      <section class="screen-view" id="screen-create">
+        <div class="action-header-row">
+          <button class="btn-back-pill" onclick="switchScreen('list')">
+            <i class="ph-bold ph-arrow-left"></i> Voltar para listagem
+          </button>
+
+          <div style="display: flex; align-items: center; gap: 20px;">
+            <span style="font-size: 1rem; font-weight: 700; color: var(--color-primary);">
+              Total do Lote: <strong id="createTotalValue" style="color: var(--color-success); font-size: 1.2rem;">R$ 0,00</strong>
+            </span>
+            <button class="btn-success-pill" onclick="handleCreateCestaSubmit()">
+              <i class="ph-fill ph-check-circle"></i> Criar Cesta de Entrega
+            </button>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-row">
+            <div class="section-title-left">
+              <i class="ph-bold ph-list-dashes"></i>
+              <span>Dados de Controle e Vínculos Contratuais da Cesta</span>
+            </div>
+            <span class="status-badge" style="background: var(--color-toast-primary); color: var(--color-primary);">
+              Status Inicial: Aberta
+            </span>
+          </div>
+          <div class="divider-line"></div>
+
+          <div class="form-row">
+            <div class="form-field" style="flex: 0 0 200px;">
+              <label>Identificador Único (#ID)</label>
+              <input type="text" id="newCestaIdInput" class="form-input" value="#106" disabled />
+            </div>
+            <div class="form-field">
+              <label>Competência (Data de Início) <span class="req">*</span></label>
+              <input type="date" id="newCestaInicio" class="form-input" value="2026-11-01" />
+            </div>
+            <div class="form-field">
+              <label>Competência (Data de Término) <span class="req">*</span></label>
+              <input type="date" id="newCestaFim" class="form-input" value="2026-11-30" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-field">
+              <label>Edital de Referência <span class="req">*</span></label>
+              <select id="newCestaEdital" class="form-select" onchange="syncContractByEdital()">
+                <option value="Edital 01/2026 - Comunicação EBSERH">Edital 01/2026 - Comunicação EBSERH</option>
+                <option value="Edital 04/2026 - Produção Audiovisual UFS">Edital 04/2026 - Produção Audiovisual UFS</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Contrato Associado <span class="req">*</span></label>
+              <select id="newCestaContrato" class="form-select">
+                <option value="Contrato Nº 18/2026 - FAPESE/EBSERH">Contrato Nº 18/2026 - FAPESE/EBSERH</option>
+                <option value="Contrato Nº 32/2026 - FAPESE/UFS">Contrato Nº 32/2026 - FAPESE/UFS</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label>Empresa Demandada Responsável <span class="req">*</span></label>
+              <select id="newCestaEmpresa" class="form-select" onchange="renderCreateDemandsPool()">
+                <option value="Vértice Digital Criativa">Vértice Digital Criativa (12.345.678/0001-90)</option>
+                <option value="Nordeste Mídia & Audiovisual">Nordeste Mídia & Audiovisual (98.765.432/0001-10)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-row">
+            <div class="section-title-left">
+              <i class="ph-fill ph-check-square-offset"></i>
+              <span>Seleção de Demandas Aptas (Entrega Aceita / Avaliada)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <input
+                type="text"
+                id="searchPoolDemandId"
+                class="form-input"
+                placeholder="Buscar demanda por #ID..."
+                style="padding: 10px 18px; width: 240px;"
+                oninput="renderCreateDemandsPool()"
+              />
+              <span class="status-badge" style="background: var(--color-toast-green); color: var(--color-success);" id="selectedDemandsCountBadge">
+                0 selecionadas
+              </span>
+            </div>
+          </div>
+          <p style="font-size: 0.92rem; color: var(--color-primary-light); line-height: 1.5;">
+            Durante a vinculação, a demanda recebe o status <strong>"Em análise para faturamento (Cesta #ID)"</strong>, impedindo sua inclusão duplicada em mais de uma cesta.
+          </p>
+          <div class="divider-line"></div>
+
+          <div class="demands-selection-grid" id="createDemandsPoolGrid"></div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-left">
+            <i class="ph-fill ph-folders"></i>
+            <span>Anexos e Documentações da Cesta</span>
+          </div>
+          <div class="upload-dropzone">
+            <input type="file" multiple accept=".pdf" onchange="handleCreateFileUpload(event)" />
+            <i class="ph-fill ph-upload-simple" style="font-size: 2.3rem; color: var(--color-primary-light);"></i>
+            <p style="font-weight: 700; font-size: 1.05rem; color: var(--color-primary);">Clique ou arraste arquivos PDF aqui</p>
+            <span style="font-size: 0.88rem; color: var(--color-neutral);">Notas Fiscais, termos de aceite, relatórios fiscais e pareceres (Máx. 5MB)</span>
+          </div>
+          <div class="files-pills-list" id="createFilesList"></div>
+        </div>
+      </section>
+
+      <section class="screen-view" id="screen-details">
+        <div class="action-header-row">
+          <div style="display: flex; align-items: center; gap: 18px; flex-wrap: wrap;">
+            <button class="btn-back-pill" onclick="switchScreen('list')">
+              <i class="ph-bold ph-arrow-left"></i> Voltar
+            </button>
+            <h2 id="detailCestaTitle" style="font-size: 1.6rem; font-weight: 900; color: var(--color-primary);"></h2>
+            <span id="detailStatusBadge" class="status-badge"></span>
+          </div>
+
+          <div id="detailStateActionsContainer" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;"></div>
+        </div>
+
+        <div id="immutabilityLockNotice" style="display: none;" class="immutability-banner">
+          <i class="ph-fill ph-lock-key" style="font-size: 1.8rem; flex-shrink: 0;"></i>
+          <div>
+            <strong>Bloqueio Pós-Pagamento Ativo:</strong> Uma vez atingido o status <strong>Paga</strong>, a cesta e suas demandas tornam-se estritamente imutáveis, impedindo adição ou remoção de demandas, alterações cadastrais ou reabertura de análises. Apenas a anexação documental comprobatória permanece habilitada.
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-row">
+            <div class="section-title-left">
+              <i class="ph-fill ph-git-commit"></i>
+              <span>Trilha de Auditoria e Ciclo de Vida da Cesta</span>
+            </div>
+            <span style="font-size: 0.88rem; font-weight: 700; color: var(--color-primary-light);" id="detailStepProgressText"></span>
+          </div>
+          <div class="divider-line"></div>
+
+          <div class="timeline-wrapper">
+            <div class="timeline-progress-bar-bg">
+              <div class="timeline-progress-bar-fill" id="timelineProgressFill"></div>
+            </div>
+            <div class="timeline-grid" id="stateMachineStepper"></div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-left">
+            <i class="ph-bold ph-list-dashes"></i>
+            <span>Resumo Operacional e Apontamentos do Lote</span>
+          </div>
+          <div class="divider-line"></div>
+          <div class="form-row" id="detailGeneralInfoGrid"></div>
+
+          <div class="form-field" style="margin-top: 8px;">
+            <label>Apontamentos Gerais sobre o Lote (Triagem Técnica / Pareceres da Esteira)</label>
+            <div style="display: flex; gap: 16px;">
+              <input type="text" id="detailLoteObservationInput" class="form-input" placeholder="Insira apontamentos gerais ou despachos sobre o lote..." />
+              <button class="btn-primary-pill" id="btnSaveLoteObservation" onclick="saveLoteObservation()">
+                <i class="ph-fill ph-floppy-disk"></i> Salvar Apontamento
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-row">
+            <div class="section-title-left">
+              <i class="ph-fill ph-list-numbers"></i>
+              <span>Demandas Vinculadas e Triagem Técnica Individual</span>
+            </div>
+            <span id="detailDemandsCounter" class="status-badge" style="background: var(--color-toast-primary); color: var(--color-primary);"></span>
+          </div>
+          <div class="divider-line"></div>
+          <div class="demands-selection-grid" id="detailDemandsList"></div>
+        </div>
+
+        <div class="section-box">
+          <div class="section-title-row">
+            <div class="section-title-left">
+              <i class="ph-fill ph-file-pdf"></i>
+              <span>Repositório Compartilhado de Documentos</span>
+            </div>
+            <span class="status-badge" style="background: var(--color-toast-green); color: var(--color-success);">
+              <i class="ph-fill ph-check-circle"></i> Inclusão Documental Irrestrita Ativa
+            </span>
+          </div>
+          <div class="divider-line"></div>
+
+          <div class="upload-dropzone">
+            <input type="file" multiple accept=".pdf" onchange="handleDetailFileUpload(event)" />
+            <i class="ph-fill ph-file-arrow-up" style="font-size: 2.3rem; color: var(--color-primary);"></i>
+            <p style="font-weight: 700; font-size: 1.05rem; color: var(--color-primary);">Anexar Nota Fiscal (NF), Certidões, Despachos ou Comprovantes</p>
+            <span style="font-size: 0.88rem; color: var(--color-neutral);">Em todas as etapas de análise (incluindo Faturada e Paga), é permitida a anexação de novos documentos comprobatórios</span>
+          </div>
+
+          <div class="files-pills-list" id="detailFilesContainer"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastBox">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <i class="ph-fill ph-check-circle" id="toastIcon" style="font-size: 1.5rem;"></i>
+      <span id="toastMessage" style="font-weight: 700; font-size: 0.92rem;"></span>
+    </div>
+    <button onclick="hideToast()" style="background: transparent; border: none; cursor: pointer; font-size: 1.1rem;">
+      <i class="ph-bold ph-x"></i>
+    </button>
+  </div>
+
+  <script>
+    const CESTA_STATES = [
+      { key: "aberta", label: "Aberta", sector: "Gestor Técnico", desc: "Seleção e inclusão de demandas avaliadas", bg: "#E3ECFA", color: "#2B6FC4", category: "tecnica_nf", nextState: "analise_gestor_tecnico", actionLabel: "Iniciar Análise pelo Gestor Técnico" },
+      { key: "analise_gestor_tecnico", label: "Análise pelo Gestor Técnico", sector: "Gestor Técnico", desc: "Triagem técnica individual e apontamentos do lote", bg: "#FFF3D9", color: "#C98318", category: "tecnica_nf", nextState: "analisada_nf_liberada", actionLabel: "Homologar e Liberar Emissão de NF" },
+      { key: "analisada_nf_liberada", label: "Analisada e NF Liberada", sector: "Gestor Técnico", desc: "Homologada tecnicamente, autorizando emissão da NF", bg: "#E4FAEE", color: "#10895E", category: "tecnica_nf", nextState: "aguardando_nf", actionLabel: "Solicitar Nota Fiscal ao Demandado" },
+      { key: "aguardando_nf", label: "Aguardando Nota Fiscal", sector: "Demandado", desc: "Empresa contratada anexa NF e espelhos", bg: "#FFEDD5", color: "#C2410C", category: "tecnica_nf", nextState: "fechada", actionLabel: "Confirmar Upload de NF e Fechar Cesta" },
+      { key: "fechada", label: "Fechada", sector: "Demandado", desc: "Upload concluído, submetendo à esteira institucional", bg: "#E9D8FD", color: "#6B46C1", category: "esteira", nextState: "analise_juridica", actionLabel: "Enviar para Análise Jurídica" },
+      { key: "analise_juridica", label: "Análise Jurídica", sector: "Jurídico", desc: "Verificação de conformidade legal e aditivos", bg: "#E7ECFF", color: "#2b466d", category: "esteira", nextState: "analise_gestor_master", actionLabel: "Aprovar e Enviar ao Gestor Master" },
+      { key: "analise_gestor_master", label: "Análise Gestor Master", sector: "Gestor Master", desc: "Parecer e autorização da gestão macro do contrato", bg: "#DBEAFE", color: "#1D4ED8", category: "esteira", nextState: "analise_compras_fapese", actionLabel: "Autorizar e Enviar p/ Compras FAPESE" },
+      { key: "analise_compras_fapese", label: "Análise Compras FAPESE", sector: "Compras FAPESE", desc: "Conferência de saldo de empenho e itens licitados", bg: "#FEF3C7", color: "#B45309", category: "esteira", nextState: "analise_financeiro", actionLabel: "Validar Empenho e Enviar ao Financeiro" },
+      { key: "analise_financeiro", label: "Análise do Financeiro", sector: "Financeiro", desc: "Validação contábil e programação de desembolso", bg: "#E0E7FF", color: "#4338CA", category: "esteira", nextState: "faturada", actionLabel: "Confirmar Liquidação (Faturar Cesta)" },
+      { key: "faturada", label: "Faturada", sector: "Financeiro", desc: "Liquidação confirmada da despesa no sistema", bg: "#D1FAE5", color: "#047857", category: "finalizadas", nextState: "paga", actionLabel: "Finalizar Pagamento Definitivo (Pagar)" },
+      { key: "paga", label: "Paga", sector: "Concluída", desc: "Finalização contábil definitiva e bloqueio de edição", bg: "#10895E", color: "#ffffff", category: "finalizadas", nextState: null, actionLabel: null }
+    ];
+
+    let activeCategoryTab = "todas";
+    let selectedCestaId = 101;
+    let createSelectedDemandIds = [412, 415];
+    let createStagedFiles = ["Termo_Aceite_Consolidado_Nov2026.pdf"];
+
+    let demandasPool = [
+      { id: 408, briefing: "Campanha de Vacinação HU-UFS", item: "Peça Gráfica Digital | Cat. 02", qtd: 4, valor: 3200.00, empresa: "Vértice Digital Criativa", statusOriginal: "Entrega Aceita", linkedCestaId: 101, comentarioTecnico: "Entregáveis validados em alta resolução." },
+      { id: 409, briefing: "Cobertura Fotográfica Inauguração Ala Pediátrica", item: "Ensaio Fotográfico | Cat. 05", qtd: 1, valor: 4800.00, empresa: "Vértice Digital Criativa", statusOriginal: "Avaliada", linkedCestaId: 101, comentarioTecnico: "Relatório fotográfico conferido pelo demandante." },
+      { id: 410, briefing: "Vídeo Institucional Segurança do Paciente", item: "Produção VT 60s | Cat. 01", qtd: 2, valor: 14500.00, empresa: "Nordeste Mídia & Audiovisual", statusOriginal: "Entrega Aceita", linkedCestaId: 102, comentarioTecnico: "Áudio e legendas aprovados." },
+      { id: 411, briefing: "Manual de Identidade Visual Setorial", item: "Editorial Completo | Cat. 03", qtd: 1, valor: 8900.00, empresa: "Vértice Digital Criativa", statusOriginal: "Entrega Aceita", linkedCestaId: 104, comentarioTecnico: "Conformidade integral com o briefing." },
+      { id: 412, briefing: "Kit de Sinalização Interna Hospitalar", item: "Design Ambiental | Cat. 04", qtd: 10, valor: 6400.00, empresa: "Vértice Digital Criativa", statusOriginal: "Entrega Aceita", linkedCestaId: null, comentarioTecnico: "" },
+      { id: 415, briefing: "Relatório Diagramado de Gestão Anual EBSERH", item: "Diagramação Editorial | Cat. 03", qtd: 1, valor: 5100.00, empresa: "Vértice Digital Criativa", statusOriginal: "Avaliada", linkedCestaId: null, comentarioTecnico: "" },
+      { id: 418, briefing: "Spots de Rádio Prevenção Epidemiológica", item: "Spot Áudio 30s | Cat. 02", qtd: 3, valor: 3900.00, empresa: "Nordeste Mídia & Audiovisual", statusOriginal: "Entrega Aceita", linkedCestaId: null, comentarioTecnico: "" }
+    ];
+
+    let cestasData = [
+      {
+        id: 101,
+        inicio: "2026-10-01",
+        fim: "2026-10-31",
+        edital: "Edital 01/2026 - Comunicação EBSERH",
+        contrato: "Contrato Nº 18/2026 - FAPESE/EBSERH",
+        empresa: "Vértice Digital Criativa",
+        status: "analise_gestor_tecnico",
+        recentMovement: true,
+        movementText: "Movimentada há 15 min • Em triagem técnica",
+        observacaoLote: "Lote referente ao fechamento de outubro/2026. Conferindo atestes individuais.",
+        arquivos: ["Espelho_Demandas_Out2026.pdf", "Relatorio_Tecnico_Preliminar_101.pdf"]
+      },
+      {
+        id: 102,
+        inicio: "2026-10-01",
+        fim: "2026-10-31",
+        edital: "Edital 04/2026 - Produção Audiovisual UFS",
+        contrato: "Contrato Nº 32/2026 - FAPESE/UFS",
+        empresa: "Nordeste Mídia & Audiovisual",
+        status: "aguardando_nf",
+        recentMovement: true,
+        movementText: "NF Liberada • Aguardando upload pelo Demandado",
+        observacaoLote: "Homologado tecnicamente. Autorizada emissão da Nota Fiscal pela contratada.",
+        arquivos: ["Termo_Homologacao_Tecnica_102.pdf"]
+      },
+      {
+        id: 103,
+        inicio: "2026-09-01",
+        fim: "2026-09-30",
+        edital: "Edital 01/2026 - Comunicação EBSERH",
+        contrato: "Contrato Nº 18/2026 - FAPESE/EBSERH",
+        empresa: "Sergipe Tech Comunicação",
+        status: "analise_compras_fapese",
+        recentMovement: true,
+        movementText: "Parecer Master aprovado • Enviada p/ Compras FAPESE",
+        observacaoLote: "Jurídico e Gestor Master aprovaram. Em conferência de saldo de empenho.",
+        arquivos: ["NF_000842_SergipeTech.pdf", "Parecer_Juridico_Favoravel_103.pdf", "Despacho_Gestor_Master_103.pdf"]
+      },
+      {
+        id: 104,
+        inicio: "2026-08-01",
+        fim: "2026-08-31",
+        edital: "Edital 01/2026 - Comunicação EBSERH",
+        contrato: "Contrato Nº 18/2026 - FAPESE/EBSERH",
+        empresa: "Vértice Digital Criativa",
+        status: "paga",
+        recentMovement: false,
+        movementText: "Finalização contábil definitiva",
+        observacaoLote: "Despesa liquidada e paga. Lote bloqueado contra alterações cadastrais.",
+        arquivos: ["NF_000719_Vertice.pdf", "Nota_Empenho_FAPESE.pdf", "Comprovante_Bancario_Pagamento_104.pdf"]
+      }
+    ];
+
+    function formatCurrency(val) {
+      return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+    }
+
+    function formatDateBR(dateStr) {
+      if (!dateStr) return "-";
+      const [y, m, d] = dateStr.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    function getStateMeta(stateKey) {
+      return CESTA_STATES.find((s) => s.key === stateKey) || CESTA_STATES[0];
+    }
+
+    function getCestaDemands(cestaId) {
+      return demandasPool.filter((d) => d.linkedCestaId === cestaId);
+    }
+
+    function getCestaTotalValue(cestaId) {
+      return getCestaDemands(cestaId).reduce((acc, item) => acc + item.valor, 0);
+    }
+
+    function populateFilterSelect() {
+      const sel = document.getElementById("filterStatusSelect");
+      sel.innerHTML = '<option value="">Todos os status</option>';
+      CESTA_STATES.forEach((st) => {
+        const opt = document.createElement("option");
+        opt.value = st.key;
+        opt.textContent = st.label;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderKpis() {
+      const totalCestas = cestasData.length;
+      const emTriagemNF = cestasData.filter((c) => getStateMeta(c.status).category === "tecnica_nf").length;
+      const naEsteira = cestasData.filter((c) => getStateMeta(c.status).category === "esteira").length;
+      const finalizadas = cestasData.filter((c) => getStateMeta(c.status).category === "finalizadas").length;
+
+      const kpiHtml = `
+        <div class="dashboard-card total-card" onclick="setCategoryTab('todas', document.querySelectorAll('.pill-tab')[0])">
+          <div class="dashboard-card-top">
+            <div class="dashboard-icon-circle" style="background: rgba(255,255,255,0.2); color: #fff;">
+              <i class="ph-fill ph-shopping-cart"></i>
+            </div>
+            <i class="ph-bold ph-trend-up" style="color: #fff; font-size: 1.5rem;"></i>
+          </div>
+          <div>
+            <div class="dashboard-card-value">${totalCestas}</div>
+            <div class="dashboard-card-title">Total de Cestas</div>
+          </div>
+        </div>
+        <div class="dashboard-card" onclick="setCategoryTab('tecnica_nf', document.querySelectorAll('.pill-tab')[1])">
+          <div class="dashboard-card-top">
+            <div class="dashboard-icon-circle" style="background: #FFF3D9; color: #C98318;">
+              <i class="ph-fill ph-wrench"></i>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: #C98318;">Triagem & NF</span>
+          </div>
+          <div>
+            <div class="dashboard-card-value">${emTriagemNF}</div>
+            <div class="dashboard-card-title">Gestor Técnico / NF</div>
+          </div>
+        </div>
+        <div class="dashboard-card" onclick="setCategoryTab('esteira', document.querySelectorAll('.pill-tab')[2])">
+          <div class="dashboard-card-top">
+            <div class="dashboard-icon-circle" style="background: #E7ECFF; color: #2b466d;">
+              <i class="ph-fill ph-scales"></i>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: #2b466d;">Auditoria</span>
+          </div>
+          <div>
+            <div class="dashboard-card-value">${naEsteira}</div>
+            <div class="dashboard-card-title">Na Esteira Institucional</div>
+          </div>
+        </div>
+        <div class="dashboard-card" onclick="setCategoryTab('finalizadas', document.querySelectorAll('.pill-tab')[3])">
+          <div class="dashboard-card-top">
+            <div class="dashboard-icon-circle" style="background: #E4FAEE; color: #10895E;">
+              <i class="ph-fill ph-currency-circle-dollar"></i>
+            </div>
+            <span style="font-size: 0.82rem; font-weight: 800; color: #10895E;">Concluídas</span>
+          </div>
+          <div>
+            <div class="dashboard-card-value">${finalizadas}</div>
+            <div class="dashboard-card-title">Faturadas & Pagas</div>
+          </div>
+        </div>
+      `;
+      document.getElementById("kpiGrid").innerHTML = kpiHtml;
+      const movCount = cestasData.filter((c) => c.recentMovement).length;
+      document.getElementById("notifCountBadge").textContent = movCount;
+    }
+
+    function renderCestasList() {
+      const query = document.getElementById("searchCestaInput").value.trim().toLowerCase();
+      document.getElementById("clearSearchBtn").style.display = query ? "block" : "none";
+
+      const statusFilter = document.getElementById("filterStatusSelect").value;
+      const empresaFilter = document.getElementById("filterEmpresaSelect").value;
+      const editalFilter = document.getElementById("filterEditalSelect").value;
+      const onlyMovement = document.getElementById("filterMovementCheck").checked;
+
+      const filtered = cestasData.filter((cesta) => {
+        const meta = getStateMeta(cesta.status);
+        if (activeCategoryTab !== "todas" && meta.category !== activeCategoryTab) return false;
+        if (statusFilter && cesta.status !== statusFilter) return false;
+        if (empresaFilter && cesta.empresa !== empresaFilter) return false;
+        if (editalFilter && cesta.edital !== editalFilter) return false;
+        if (onlyMovement && !cesta.recentMovement) return false;
+
+        if (query) {
+          const cleanId = query.replace("#", "");
+          const matchId = String(cesta.id).includes(cleanId);
+          const matchEmpresa = cesta.empresa.toLowerCase().includes(query);
+          const matchContrato = cesta.contrato.toLowerCase().includes(query);
+          const matchEdital = cesta.edital.toLowerCase().includes(query);
+          return matchId || matchEmpresa || matchContrato || matchEdital;
+        }
+        return true;
+      });
+
+      const container = document.getElementById("cestasListContainer");
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="section-box" style="align-items: center; justify-content: center; padding: 70px 24px; text-align: center;">
+            <i class="ph-bold ph-tray" style="font-size: 3rem; color: var(--color-primary-light);"></i>
+            <p style="font-weight: 700; color: var(--color-primary); font-size: 1.05rem;">Nenhuma Cesta de Entrega encontrada para os filtros selecionados.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered
+        .map((cesta) => {
+          const meta = getStateMeta(cesta.status);
+          const demands = getCestaDemands(cesta.id);
+          const totalVal = getCestaTotalValue(cesta.id);
+          const isImmutable = cesta.status === "paga";
+
+          return `
+            <div class="data-card" onclick="openCestaDetails(${cesta.id})">
+              <div class="data-card-left">
+                <div class="data-card-icon">
+                  <i class="ph-fill ${isImmutable ? 'ph-lock-key' : 'ph-shopping-bag-open'}"></i>
+                </div>
+                <div class="data-card-body">
+                  <div class="data-card-title-row">
+                    <span class="data-card-title">Cesta #${cesta.id} — ${cesta.empresa}</span>
+                    <span class="status-badge" style="background: ${meta.bg}; color: ${meta.color};">
+                      ${meta.label}
+                    </span>
+                    ${
+                      cesta.recentMovement
+                        ? `<span class="movement-notif-pill"><i class="ph-fill ph-bell-ringing"></i> ${cesta.movementText}</span>`
+                        : ""
+                    }
+                  </div>
+                  <div class="data-card-meta">
+                    <span class="meta-item"><i class="ph-fill ph-calendar-blank"></i> ${formatDateBR(cesta.inicio)} a ${formatDateBR(cesta.fim)}</span>
+                    <span class="meta-item"><i class="ph-fill ph-signature"></i> ${cesta.contrato}</span>
+                    <span class="meta-item"><i class="ph-fill ph-stack"></i> ${demands.length} demanda(s)</span>
+                    <span class="meta-item"><i class="ph-fill ph-paperclip"></i> ${cesta.arquivos.length} anexo(s)</span>
+                    <span class="meta-item" style="color: var(--color-success); font-weight: 800; background: var(--color-toast-green);">
+                      <i class="ph-bold ph-money"></i> ${formatCurrency(totalVal)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <button class="btn-card-details" onclick="event.stopPropagation(); openCestaDetails(${cesta.id})">
+                <i class="ph-fill ph-info"></i> Ver Detalhes
+              </button>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function setCategoryTab(category, btnEl) {
+      activeCategoryTab = category;
+      document.querySelectorAll(".pill-tab").forEach((b) => b.classList.remove("active"));
+      if (btnEl) btnEl.classList.add("active");
+      renderCestasList();
+    }
+
+    function clearSearchInput() {
+      document.getElementById("searchCestaInput").value = "";
+      renderCestasList();
+    }
+
+    function resetAllFilters() {
+      document.getElementById("searchCestaInput").value = "";
+      document.getElementById("filterStatusSelect").value = "";
+      document.getElementById("filterEmpresaSelect").value = "";
+      document.getElementById("filterEditalSelect").value = "";
+      document.getElementById("filterMovementCheck").checked = false;
+      setCategoryTab("todas", document.querySelectorAll(".pill-tab")[0]);
+      showToast("Filtros de pesquisa limpos.", "success");
+    }
+
+    function filterByRecentMovement() {
+      switchScreen("list");
+      const chk = document.getElementById("filterMovementCheck");
+      chk.checked = !chk.checked;
+      renderCestasList();
+      showToast(
+        chk.checked
+          ? "Filtrando cestas com notificações visuais de movimentação."
+          : "Exibindo todas as cestas.",
+        "success"
+      );
+    }
+
+    function syncContractByEdital() {
+      const editalVal = document.getElementById("newCestaEdital").value;
+      const contratoSel = document.getElementById("newCestaContrato");
+      if (editalVal.includes("01/2026")) {
+        contratoSel.value = "Contrato Nº 18/2026 - FAPESE/EBSERH";
+      } else {
+        contratoSel.value = "Contrato Nº 32/2026 - FAPESE/UFS";
+      }
+    }
+
+    function renderCreateDemandsPool() {
+      const nextId = 100 + cestasData.length + 2;
+      document.getElementById("newCestaIdInput").value = `#${nextId}`;
+
+      const empresaSelecionada = document.getElementById("newCestaEmpresa").value;
+      const idSearch = document.getElementById("searchPoolDemandId").value.trim().replace("#", "");
+
+      const pool = demandasPool.filter((d) => {
+        if (d.empresa !== empresaSelecionada) return false;
+        if (idSearch && !String(d.id).includes(idSearch)) return false;
+        return true;
+      });
+
+      const grid = document.getElementById("createDemandsPoolGrid");
+      grid.innerHTML = pool
+        .map((dem) => {
+          const isLockedInOtherCesta = dem.linkedCestaId !== null;
+          const isSelectedHere = createSelectedDemandIds.includes(dem.id);
+
+          let badgeHtml = `<span class="status-badge" style="background: #05966920; color: #059669; border: 1px solid #059669;">${dem.statusOriginal}</span>`;
+          if (isLockedInOtherCesta) {
+            badgeHtml = `<span class="status-badge" style="background: #FEEBC8; color: #C2410C; border: 1px solid #C2410C;"><i class="ph-fill ph-lock"></i> Cesta #${dem.linkedCestaId}</span>`;
+          } else if (isSelectedHere) {
+            badgeHtml = `<span class="status-badge" style="background: var(--color-toast-primary); color: var(--color-primary); border: 1px solid var(--color-primary);"><i class="ph-fill ph-arrows-clockwise"></i> Em análise p/ faturamento (Cesta #${nextId})</span>`;
+          }
+
+          return `
+            <div class="demanda-card ${isSelectedHere ? "selected" : ""} ${isLockedInOtherCesta ? "locked-duplicate" : ""}">
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                  <strong style="color: var(--color-primary); font-size: 1.05rem; line-height: 1.3;">${dem.briefing}</strong>
+                  <span style="font-size: 0.85rem; font-weight: 800; color: var(--color-primary-light); white-space: nowrap;">Demanda #${dem.id}</span>
+                </div>
+                <div>${badgeHtml}</div>
+              </div>
+
+              <div class="demanda-inner-box">
+                <div><i class="ph-bold ph-list-numbers"></i> <strong>Item:</strong> ${dem.item}</div>
+                <div><i class="ph-bold ph-hash"></i> <strong>Quantidade:</strong> ${dem.qtd}</div>
+                <div style="color: var(--color-success); font-weight: 800;"><i class="ph-bold ph-money"></i> Valor: ${formatCurrency(dem.valor)}</div>
+              </div>
+
+              <button
+                class="btn-primary-pill"
+                style="width: 100%; justify-content: center; background: ${
+                  isLockedInOtherCesta
+                    ? "var(--color-neutral-light)"
+                    : isSelectedHere
+                    ? "var(--color-primary)"
+                    : "var(--color-toast-primary)"
+                }; color: ${
+                  isLockedInOtherCesta || isSelectedHere ? "#fff" : "var(--color-primary)"
+                }; border: none;"
+                ${isLockedInOtherCesta ? "disabled" : ""}
+                onclick="toggleSelectDemandForNewCesta(${dem.id})"
+              >
+                <i class="ph-fill ${
+                  isLockedInOtherCesta
+                    ? "ph-prohibit"
+                    : isSelectedHere
+                    ? "ph-check-circle"
+                    : "ph-selection-all"
+                }"></i>
+                ${
+                  isLockedInOtherCesta
+                    ? `Vinculada à Cesta #${dem.linkedCestaId}`
+                    : isSelectedHere
+                    ? "Selecionada no Lote"
+                    : "Vincular à Cesta"
+                }
+              </button>
+            </div>
+          `;
+        })
+        .join("");
+
+      const selectedObjs = demandasPool.filter((d) => d.linkedCestaId === null && createSelectedDemandIds.includes(d.id) && d.empresa === empresaSelecionada);
+      const sum = selectedObjs.reduce((acc, item) => acc + item.valor, 0);
+      document.getElementById("createTotalValue").textContent = formatCurrency(sum);
+      document.getElementById("selectedDemandsCountBadge").textContent = `${selectedObjs.length} selecionada(s)`;
+      renderCreateStagedFiles();
+    }
+
+    function toggleSelectDemandForNewCesta(demId) {
+      if (createSelectedDemandIds.includes(demId)) {
+        createSelectedDemandIds = createSelectedDemandIds.filter((id) => id !== demId);
+      } else {
+        createSelectedDemandIds.push(demId);
+      }
+      renderCreateDemandsPool();
+    }
+
+    function handleCreateFileUpload(event) {
+      const files = Array.from(event.target.files || []);
+      files.forEach((f) => createStagedFiles.push(f.name));
+      renderCreateStagedFiles();
+      showToast(`${files.length} arquivo(s) incluído(s) na cesta.`, "success");
+    }
+
+    function renderCreateStagedFiles() {
+      const container = document.getElementById("createFilesList");
+      container.innerHTML = createStagedFiles
+        .map(
+          (name, idx) => `
+          <div class="file-pill">
+            <i class="ph-fill ph-file-pdf" style="font-size: 1.35rem;"></i>
+            <span>${name}</span>
+            <button onclick="removeCreateStagedFile(${idx})" style="background: transparent; border: none; color: var(--color-error); cursor: pointer;">
+              <i class="ph-fill ph-trash" style="font-size: 1.1rem;"></i>
+            </button>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+    function removeCreateStagedFile(idx) {
+      createStagedFiles.splice(idx, 1);
+      renderCreateStagedFiles();
+    }
+
+    function handleCreateCestaSubmit() {
+      const inicio = document.getElementById("newCestaInicio").value;
+      const fim = document.getElementById("newCestaFim").value;
+      const edital = document.getElementById("newCestaEdital").value;
+      const contrato = document.getElementById("newCestaContrato").value;
+      const empresa = document.getElementById("newCestaEmpresa").value;
+
+      if (!inicio || !fim || new Date(inicio) > new Date(fim)) {
+        showToast("Período de Competência inválido: a data final deve ser posterior à data inicial.", "error");
+        return;
+      }
+
+      const validSelected = demandasPool.filter((d) => d.linkedCestaId === null && createSelectedDemandIds.includes(d.id) && d.empresa === empresa);
+      if (validSelected.length === 0) {
+        showToast("Selecione ao menos uma demanda avaliada/aceita para compor a cesta.", "error");
+        return;
+      }
+
+      const newId = 100 + cestasData.length + 2;
+      validSelected.forEach((d) => {
+        d.linkedCestaId = newId;
+        d.comentarioTecnico = "Vinculada pelo Gestor Técnico para apuração.";
+      });
+
+      const novaCesta = {
+        id: newId,
+        inicio,
+        fim,
+        edital,
+        contrato,
+        empresa,
+        status: "aberta",
+        recentMovement: true,
+        movementText: "Recém-criada pelo Gestor Técnico",
+        observacaoLote: "Lote aberto em fase de seleção e conferência técnica inicial.",
+        arquivos: [...createStagedFiles]
+      };
+
+      cestasData.unshift(novaCesta);
+      createSelectedDemandIds = [];
+      createStagedFiles = [];
+      showToast(`Cesta #${newId} criada com sucesso!`, "success");
+      openCestaDetails(newId);
+    }
+
+    function openCestaDetails(cestaId) {
+      selectedCestaId = cestaId;
+      switchScreen("details");
+      renderCestaDetails();
+    }
+
+    function renderCestaDetails() {
+      const cesta = cestasData.find((c) => c.id === selectedCestaId) || cestasData[0];
+      if (!cesta) return;
+
+      const meta = getStateMeta(cesta.status);
+      const isPaidLocked = cesta.status === "paga";
+      const demands = getCestaDemands(cesta.id);
+      const totalVal = getCestaTotalValue(cesta.id);
+
+      document.getElementById("detailCestaTitle").textContent = `Cesta de Entrega #${cesta.id} — ${cesta.empresa}`;
+      const badgeEl = document.getElementById("detailStatusBadge");
+      badgeEl.textContent = meta.label;
+      badgeEl.style.background = meta.bg;
+      badgeEl.style.color = meta.color;
+
+      document.getElementById("immutabilityLockNotice").style.display = isPaidLocked ? "flex" : "none";
+
+      const currentIdx = CESTA_STATES.findIndex((s) => s.key === cesta.status);
+      const progressPercent = Math.round(((currentIdx + 1) / CESTA_STATES.length) * 100);
+      document.getElementById("timelineProgressFill").style.width = `${progressPercent}%`;
+      document.getElementById("detailStepProgressText").textContent = `Etapa ${currentIdx + 1} de ${CESTA_STATES.length} (${progressPercent}% concluído)`;
+
+      document.getElementById("stateMachineStepper").innerHTML = CESTA_STATES.map((st, idx) => {
+        const cls = idx < currentIdx ? "completed" : idx === currentIdx ? "current" : "";
+        const stepContent = idx < currentIdx ? '<i class="ph-bold ph-check"></i>' : idx + 1;
+        return `
+          <div class="timeline-card ${cls}">
+            <div class="timeline-card-header">
+              <div class="timeline-step-number">${stepContent}</div>
+              <span class="timeline-sector-tag">${st.sector}</span>
+            </div>
+            <div class="timeline-step-title">${st.label}</div>
+            <div class="timeline-step-desc">${st.desc}</div>
+          </div>
+        `;
+      }).join("");
+
+      const actionsBox = document.getElementById("detailStateActionsContainer");
+
+      if (isPaidLocked) {
+        actionsBox.innerHTML = `
+          <span class="status-badge" style="background: var(--color-toast-red); color: var(--color-error); padding: 10px 18px;">
+            <i class="ph-fill ph-lock-key"></i> Cesta Paga e Bloqueada
+          </span>
+        `;
+      } else {
+        actionsBox.innerHTML = `
+          <button
+            class="btn-success-pill"
+            onclick="advanceCestaState(${cesta.id})"
+          >
+            <i class="ph-fill ph-arrow-circle-right"></i>
+            ${meta.actionLabel}
+          </button>
+        `;
+      }
+
+      document.getElementById("detailGeneralInfoGrid").innerHTML = `
+        <div class="form-field">
+          <label><i class="ph-fill ph-calendar-blank"></i> Período de Competência</label>
+          <input class="form-input" value="${formatDateBR(cesta.inicio)} até ${formatDateBR(cesta.fim)}" disabled />
+        </div>
+        <div class="form-field">
+          <label><i class="ph-fill ph-megaphone"></i> Edital de Referência</label>
+          <input class="form-input" value="${cesta.edital}" disabled />
+        </div>
+        <div class="form-field">
+          <label><i class="ph-fill ph-signature"></i> Contrato Associado</label>
+          <input class="form-input" value="${cesta.contrato}" disabled />
+        </div>
+        <div class="form-field">
+          <label><i class="ph-fill ph-currency-circle-dollar"></i> Valor Total Apurado</label>
+          <input class="form-input" style="color: var(--color-success); font-weight: 800;" value="${formatCurrency(totalVal)}" disabled />
+        </div>
+      `;
+
+      const obsInput = document.getElementById("detailLoteObservationInput");
+      const obsBtn = document.getElementById("btnSaveLoteObservation");
+      obsInput.value = cesta.observacaoLote || "";
+      obsInput.disabled = isPaidLocked;
+      obsBtn.disabled = isPaidLocked;
+
+      document.getElementById("detailDemandsCounter").textContent = `${demands.length} demanda(s) vinculada(s)`;
+      const canEditTechnicalComments = !isPaidLocked;
+      const canRemoveDemand = !isPaidLocked && cesta.status === "aberta";
+
+      document.getElementById("detailDemandsList").innerHTML = demands
+        .map(
+          (d) => `
+          <div class="demanda-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <strong style="color: var(--color-primary); font-size: 1.05rem;">Demanda #${d.id} — ${d.briefing}</strong>
+                <div>
+                  <span class="status-badge" style="background: var(--color-toast-primary); color: var(--color-primary);">
+                    Cesta #${cesta.id} • Em análise para faturamento
+                  </span>
+                </div>
+              </div>
+              ${
+                canRemoveDemand
+                  ? `<button onclick="unlinkDemandFromCesta(${d.id}, ${cesta.id})" title="Remover demanda da cesta" style="background: var(--color-toast-red); color: var(--color-error); border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; flex-shrink: 0;">
+                      <i class="ph-fill ph-trash"></i>
+                    </button>`
+                  : ""
+              }
+            </div>
+
+            <div class="demanda-inner-box">
+              <div><strong>Item do Edital:</strong> ${d.item}</div>
+              <div><strong>Quantidade:</strong> ${d.qtd} | <strong style="color: var(--color-success);">Valor: ${formatCurrency(d.valor)}</strong></div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <label style="font-size: 0.85rem; font-weight: 700; color: var(--color-primary-light);">
+                Comentário Técnico Individual:
+              </label>
+              <div style="display: flex; gap: 10px;">
+                <input
+                  type="text"
+                  id="commentInput_${d.id}"
+                  class="audit-comment-input"
+                  value="${d.comentarioTecnico || ""}"
+                  placeholder="Inserir parecer técnico individual desta demanda..."
+                  ${!canEditTechnicalComments ? "disabled" : ""}
+                />
+                ${
+                  canEditTechnicalComments
+                    ? `<button class="btn-primary-pill" style="padding: 10px 18px; font-size: 0.85rem;" onclick="saveIndividualDemandComment(${d.id})">
+                        Salvar
+                      </button>`
+                    : ""
+                }
+              </div>
+            </div>
+          </div>
+        `
+        )
+        .join("");
+
+      document.getElementById("detailFilesContainer").innerHTML = cesta.arquivos
+        .map(
+          (arq) => `
+          <div class="file-pill">
+            <i class="ph-fill ph-file-pdf" style="font-size: 1.4rem;"></i>
+            <span>${arq}</span>
+            <span style="font-size: 0.78rem; opacity: 0.7; font-style: italic;">Download</span>
+          </div>
+        `
+        )
+        .join("");
+    }
+
+    function advanceCestaState(cestaId) {
+      const cesta = cestasData.find((c) => c.id === cestaId);
+      if (!cesta) return;
+      const meta = getStateMeta(cesta.status);
+
+      if (meta.nextState) {
+        const nextMeta = getStateMeta(meta.nextState);
+        cesta.status = meta.nextState;
+        cesta.recentMovement = true;
+        cesta.movementText = `Avançou para: ${nextMeta.label}`;
+        renderCestaDetails();
+        showToast(`Status da Cesta #${cesta.id} atualizado para "${nextMeta.label}"!`, "success");
+      }
+    }
+
+    function saveLoteObservation() {
+      const cesta = cestasData.find((c) => c.id === selectedCestaId);
+      if (!cesta || cesta.status === "paga") return;
+      cesta.observacaoLote = document.getElementById("detailLoteObservationInput").value;
+      showToast("Apontamento geral do lote salvo com sucesso.", "success");
+    }
+
+    function saveIndividualDemandComment(demId) {
+      const dem = demandasPool.find((d) => d.id === demId);
+      if (!dem) return;
+      const val = document.getElementById(`commentInput_${demId}`).value;
+      dem.comentarioTecnico = val;
+      showToast(`Comentário técnico da Demanda #${demId} registrado.`, "success");
+    }
+
+    function unlinkDemandFromCesta(demId, cestaId) {
+      const currentList = getCestaDemands(cestaId);
+      if (currentList.length <= 1) {
+        showToast("A cesta deve manter ao menos uma demanda vinculada.", "error");
+        return;
+      }
+      const dem = demandasPool.find((d) => d.id === demId);
+      if (dem) {
+        dem.linkedCestaId = null;
+        renderCestaDetails();
+        showToast(`Demanda #${demId} removida da Cesta #${cestaId}.`, "success");
+      }
+    }
+
+    function handleDetailFileUpload(event) {
+      const cesta = cestasData.find((c) => c.id === selectedCestaId);
+      if (!cesta) return;
+      const files = Array.from(event.target.files || []);
+      files.forEach((f) => cesta.arquivos.push(f.name));
+      cesta.recentMovement = true;
+      cesta.movementText = `Novo documento anexado (${files[0]?.name || "PDF"})`;
+      renderCestaDetails();
+      showToast("Documento anexado ao repositório compartilhado da cesta!", "success");
+    }
+
+    function switchScreen(screenKey) {
+      document.querySelectorAll(".screen-view").forEach((s) => s.classList.remove("active"));
+      document.querySelectorAll(".screen-tab-btn").forEach((b) => b.classList.remove("active"));
+
+      if (screenKey === "list") {
+        document.getElementById("screen-list").classList.add("active");
+        document.getElementById("tabBtnList").classList.add("active");
+        document.getElementById("pageMainTitle").textContent = "Cesta de Entrega";
+        renderKpis();
+        renderCestasList();
+      } else if (screenKey === "create") {
+        document.getElementById("screen-create").classList.add("active");
+        document.getElementById("tabBtnCreate").classList.add("active");
+        document.getElementById("pageMainTitle").textContent = "Nova Cesta de Entrega";
+        renderCreateDemandsPool();
+      } else if (screenKey === "details") {
+        document.getElementById("screen-details").classList.add("active");
+        document.getElementById("tabBtnDetails").classList.add("active");
+        document.getElementById("pageMainTitle").textContent = "Auditoria e Esteira da Cesta";
+        renderCestaDetails();
+      }
+    }
+
+    let toastTimeout;
+    function showToast(message, type) {
+      const box = document.getElementById("toastBox");
+      const msg = document.getElementById("toastMessage");
+      const icon = document.getElementById("toastIcon");
+
+      msg.textContent = message;
+      if (type === "error") {
+        box.style.background = "var(--color-toast-red)";
+        box.style.border = "1px solid var(--color-error)";
+        box.style.color = "var(--color-error)";
+        icon.className = "ph-fill ph-x-circle";
+      } else {
+        box.style.background = "var(--color-toast-green)";
+        box.style.border = "1px solid var(--color-success)";
+        box.style.color = "var(--color-success)";
+        icon.className = "ph-fill ph-check-circle";
+      }
+
+      box.classList.add("show");
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        box.classList.remove("show");
+      }, 4500);
+    }
+
+    function hideToast() {
+      document.getElementById("toastBox").classList.remove("show");
+    }
+
+    document.getElementById("toggleSidebarBtn").addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("expanded");
+    });
+
+    populateFilterSelect();
+    renderKpis();
+    renderCestasList();
+  </script>
+</body>
+</html>
